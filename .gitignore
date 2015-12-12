@@ -1,0 +1,12 @@
+data/*
+preprocessingData/*
+p2data/*
+news_story_dataset/*
+dict.dict
+shard.0
+shard.1
+shard.2
+shard.3
+shard.4
+*.model
+*.sim
