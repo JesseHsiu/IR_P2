@@ -115,7 +115,7 @@ def traditionalize(text):
 
 if __name__ == '__main__':
 	
-	if len(sys.argv) == 4:
+	if len(sys.argv) == 5:
 		# ======= Trainning News Category =======
 		# Depends on current news classifier
 		ebCawler = EBCawler()
@@ -131,36 +131,49 @@ if __name__ == '__main__':
 		originDocs_Dir = sys.argv[1]
 		outputDocs_Dir = sys.argv[2]
 		outputWithCateDocs_Dir = sys.argv[3]
+		tranningCSV = sys.argv[4]
 		originDocs = OriginDocs(originDocs_Dir, outputDocs_Dir)
 		# originDocs.simplifyAllDoc();
 
 		# ======= Category Original Docs and save to json file =======
-		for x in os.listdir(outputDocs_Dir):
-			if x == ".DS_Store":
-				continue
-			content = None
-			with open(outputDocs_Dir + "/" + x) as f:
-				content = f.readline()
-			list = []
-			content_sentences = content.split('。')
-			for sentence in content_sentences:
-				if len(sentence) != 0:
-					list.extend(jieba.cut(sentence, cut_all=True))
-			result = grocery.predict(content)
-			print x
-			with codecs.open(outputWithCateDocs_Dir + "/" + x, "w", "utf-8") as f:
-				f.write(str(result))
-				f.write("\n")
-				for term in list:
-					# if the term word is less than 2, which is a single word, then ignore it
-					if len(term) < 2:
-						continue
-					else:
-						f.write(term)
-						f.write(',')
-				
+		# for x in os.listdir(outputDocs_Dir):
+		# 	if x == ".DS_Store":
+		# 		continue
+		# 	content = None
+		# 	with open(outputDocs_Dir + "/" + x) as f:
+		# 		content = f.readline()
+		# 	list = []
+		# 	content_sentences = content.split('。')
+		# 	for sentence in content_sentences:
+		# 		if len(sentence) != 0:
+		# 			list.extend(jieba.cut(sentence, cut_all=True))
+		# 	result = grocery.predict(content)
+		# 	print x
+		# 	with codecs.open(outputWithCateDocs_Dir + "/" + x, "w", "utf-8") as f:
+		# 		f.write(str(result))
+		# 		f.write("\n")
+		# 		for term in list:
+		# 			# if the term word is less than 2, which is a single word, then ignore it
+		# 			if len(term) < 2:
+		# 				continue
+		# 			else:
+		# 				f.write(term)
+		# 				f.write(',')
+		
+		# ======= Add Publisher to All docs =======
+		# TODO : Should combine with the previous step which will decrease computation time.
+		with open(tranningCSV) as f:
+			next(f)
+			for line in f:
+				filename, publisher = line.rstrip().split(',')
+				with open( outputWithCateDocs_Dir+ "/" + filename +".txt", "a") as appendfile:
+				    appendfile.write("\n")
+				    appendfile.write(publisher)
+				print filename
+
+
 		# ======= Train 4 Category with 3 Publisher(LTN,CTS,APD) =======
 		
 
 	else:
-		print "Please use like 'python sim.py [originDocs_Dir] [outputDocs_Dir] [With]'"
+		print "Please use like 'python sim.py [originDocs_Dir] [outputDocs_Dir] [WithCatagoryAndPublisher] [train.csv]'"
