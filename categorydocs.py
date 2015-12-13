@@ -99,15 +99,14 @@ class CorporaMgr(object):
 			# dictionary.compactify()
 			# dictionary.save('./'+ str(cate_count)+ "_" + str(publisher_count) +'.dict')
 			self.corporaDict[count] = corpora.Dictionary.load('./'+ str(cate_count)+ "_" + str(publisher_count) +'.dict')
-			# print dictionary
+			
 			# dc = DocCorpus(Docs(self.docsURL,cate_count,publisher_count), dictionary)
 			# tfidf = models.TfidfModel(dc)
 			# tfidf.save('./'+ str(cate_count)+ "_" + str(publisher_count) +'.tfidf_model')
 			
-			# index = Similarity(corpus=tfidf[dc], num_features=tfidf.num_nnz, output_prefix="str(cate_count)+ "_" + str(publisher_count)",num_best=50)
+			# index = Similarity(corpus=tfidf[dc], num_features=tfidf.num_nnz, output_prefix=(str(cate_count)+ "_" + str(publisher_count)),num_best=50)
 			# self.index.append(index)
 			# index.save('./'+ str(cate_count)+ "_" + str(publisher_count) +'.sim')
-			
 			self.index.append(Similarity.load('./'+ str(cate_count)+ "_" + str(publisher_count) +'.sim'))
 
 			publisher_count+=1
@@ -305,7 +304,13 @@ if __name__ == '__main__':
 		# 	content_sentences = content.split('。')
 		# 	for sentence in content_sentences:
 		# 		if len(sentence) != 0:
-		# 			list.extend(jieba.cut(sentence, cut_all=True))
+		# 			data = []
+		# 			allowFlag = ['v','vd','vn','vshi','vyou','vf','vx','vi','vl','vg','a','ad','an','ag','al','d']
+		# 			words = pseg.cut(sentence)
+		# 			for word, flag in words:
+		# 				if flag in allowFlag and len(word) > 1:
+		# 					list.append(word)
+		# 			# list.extend(jieba.cut(sentence, cut_all=True))
 		# 	result = grocery.predict(content)
 		# 	print x
 		# 	with codecs.open(outputWithCateDocs_Dir + "/" + x, "w", "utf-8") as f:
@@ -335,8 +340,6 @@ if __name__ == '__main__':
 		corporaMgr = CorporaMgr(outputWithCateDocs_Dir)
 		corporaMgr.generateCategoryAndPublisher()
 
-
-
 		# ======= Predict And result.csv =======
 		with open( "result.csv", "w") as outputfile:
 			outputfile.write("NewsId,Agency")
@@ -353,7 +356,7 @@ if __name__ == '__main__':
 						# print data[x]
 						content += data[x]
 					# print content
-					results = corporaMgr.getClassifiyPublisherName(content, grocery.predict(content))
+					results = corporaMgr.getClassifiyPublisherName(content, grocery.predict(simplify(content)))
 					outputfile.write(nameOfdata)
 					outputfile.write(",")
 					outputfile.write(numToPublisher(results.index(max(results))))
@@ -361,3 +364,4 @@ if __name__ == '__main__':
 
 	else:
 		print "Please use like 'python sim.py [originDocs_Dir] [outputDocs_Dir] [WithCatagoryAndPublisher] [train.csv]'"
+	# python categorydocs.py news_story_dataset/ preprocessingData/simplify/ preprocessingData/withCategory/ train.csv p2data/phase2_test_dataset/
