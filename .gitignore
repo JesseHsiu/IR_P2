@@ -10,3 +10,6 @@ shard.3
 shard.4
 *.model
 *.sim
+*.0
+*.dict
+*.tfidf_model
