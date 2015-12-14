@@ -13,6 +13,7 @@ from gensim.similarities.docsim import Similarity
 import jieba
 import jieba.analyse
 import jieba.posseg as pseg
+from scipy import stats
 
 # Logging from gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -124,26 +125,46 @@ class CorporaMgr(object):
 				# print word, 
 			# print('%s %s' % (word, flag))
 
-		# terms = jieba.lcut(simplify(removeCharacter(queryDoc)), cut_all=True)
-		# termsToRemove = []
-		# for term in terms:
-		# 	if len(term) < 2:
-		# 		termsToRemove.append(term)
-		# for term in termsToRemove:
-		# 	terms.remove(term)
-		# print terms
+		totalDocs = 0
+		for x in xrange(0, len(self.index)) :
+			if x >= category*len(publisherList) and x < category*len(publisherList)+ len(publisherList):
+				totalDocs += len(self.index[x])
+
+		normalizer = []
+		for x in xrange(0, len(self.index)) :
+			if x >= category*len(publisherList) and x < category*len(publisherList)+ len(publisherList):
+				normalizer.append(totalDocs/float(len(self.index[x])))
+		# print normalizer
+
 
 		results = []
-		# print len(self.corporaDict)
-		# print self.corporaDict[0].doc2bow([u'\u6e38\u4e50\u56ed'])
+		count = 0
 		for x in xrange(0, len(self.corporaDict)) :
 			# print self.corporaDict[x].doc2bow(terms)
 			if x >= category*len(publisherList) and x < category*len(publisherList)+ len(publisherList):
 				result = self.index[x][self.corporaDict[x].doc2bow(terms)]
-				if len(result) == 0:
-					results.append(0)
-				else:
-					results.append(result[len(result)/2][1])
+				
+				# === ALL RESULT ===
+				list = []
+				results.append(list)
+				for rank in result:
+					list.append(rank[1])
+
+				
+				# ==== MIDDLE ===
+				# if len(result) == 0:
+				# 	results.append(0)
+				# else:
+				# 	results.append(result[len(result)/2][1])# * normalizer[count]
+				
+
+				# ==== FIRST VALUE ===
+				# if len(result) == 0:
+				# 	results.append(0)
+				# else:
+				# 	results.append(result[0][1])
+
+				# ==== AVG ===
 				# avg_score = []
 				# for rank in result:
 				# 	avg_score.append(rank[1])
@@ -151,7 +172,54 @@ class CorporaMgr(object):
 				# 	results.append(0)
 				# else:
 				# 	results.append(sum(avg_score) / float(len(avg_score)))
-		return results
+				# count+=1
+
+		# minLength = 50
+		# for result in results:
+		# 	if len(result) == 0:
+		# 		continue
+		# 	if len(result) < minLength:
+		# 		minLength = len(result)
+
+		# finalOutput = []
+		# count = 0
+		# for result in results:
+		# 	if len(result) == 0:
+		# 		finalOutput.append(0)
+		# 		count += 1
+		# 		continue
+		# 	else:
+		# 		tmp = 0
+		# 		for x in xrange(0, minLength):
+		# 			tmp += result[x]
+		# 		finalOutput.append(tmp)
+		# 		count += 1
+		
+		# count = 0
+		# for x in xrange(0, len(finalOutput)):
+		# 	finalOutput[x] *= normalizer[x]
+
+		# pValue = []
+		# for x in xrange(0,len(results)):
+
+		# 	if len(results[x]) == 0:
+		# 		pValue.append(100)
+		# 		continue
+
+		# 	upper = x+1
+		# 	if upper >= 3:
+		# 		upper = 0
+
+		# 	lower = x-1
+		# 	if lower < 0:
+		# 		lower = 2
+		# 	pValue.append(stats.ttest_ind(results[x],results[upper])[1] + stats.ttest_ind(results[x],results[lower])[1])
+
+
+
+
+		print finalOutput
+		return numToPublisher(finalOutput.index(max(finalOutput)))
 
 class DocCorpus(object):
 	def __init__(self, texts, dict):
@@ -207,9 +275,6 @@ def removeCharacter(string):
 def parseFile(filename, dirname, outputDir):	
 	tree = ET.parse(os.path.join(dirname, filename))
 	root = tree.getroot()
-	
-	# # Noted that there is no 。 due to split by this punc.
-	# puncs = ['，', '?', '@', '!', '$', '%', '『', '』', '「', '」', '＼', '｜', '？', ' ', '*', '(', ')', '~', '.', '[', ']', '\n','1','2','3','4','5','6','7','8','9','0']
 
 	title_Text = root[0].attrib['title']
 	title_Text = title_Text.encode('utf-8')
@@ -356,10 +421,10 @@ if __name__ == '__main__':
 						# print data[x]
 						content += data[x]
 					# print content
-					results = corporaMgr.getClassifiyPublisherName(content, grocery.predict(simplify(content)))
+					result = corporaMgr.getClassifiyPublisherName(content, grocery.predict(simplify(content)))
 					outputfile.write(nameOfdata)
 					outputfile.write(",")
-					outputfile.write(numToPublisher(results.index(max(results))))
+					outputfile.write(result)
 					outputfile.write("\n")
 
 	else:
