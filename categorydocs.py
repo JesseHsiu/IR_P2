@@ -14,10 +14,13 @@ import jieba
 import jieba.analyse
 import jieba.posseg as pseg
 from scipy import stats
+from snownlp import sentiment
+from snownlp import SnowNLP
 
 # Logging from gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
+########## INITIATION ##########
 allowCategory = [ u'社會', u'娛樂', u'政治', u'生活']
 publisherList = [ 'LTN', 'APD', 'CTS']
 
@@ -36,6 +39,7 @@ jieba.add_word('郑捷')
 jieba.add_word('瓦斯')
 jieba.add_word('气爆')
 
+########## CLASS ##########
 class EBCawler(object):
 	def __init__(self):
 		self.url = "http://news.ebc.net.tw/rss/"
@@ -405,27 +409,64 @@ if __name__ == '__main__':
 		corporaMgr = CorporaMgr(outputWithCateDocs_Dir)
 		corporaMgr.generateCategoryAndPublisher()
 
+
+		sentiments_FromSet = []
+		# SENTIMENT TRAINNING FROM NTUSD
+		# sentiment.train('neg.txt', 'pos.txt')
+		# sentiment.save('sentiment.marshal')
+
+		for cate in xrange(0, len(allowCategory)):
+			print "cate", cate
+			for publisher in xrange(0, len(publisherList)):
+				print "publisher", publisher
+				count = 0
+				senti = 0.0
+				for doc in Docs(outputWithCateDocs_Dir,cate,publisher):
+					
+					if len(doc[2]) == 0:
+						continue
+					count_inDoc = 0
+					senti_inDoc = 0.0
+					for term in doc[2]:
+						s = SnowNLP(unicode(term, 'utf-8'))
+						if s.sentiments == 0.5:
+							continue
+						senti_inDoc += s.sentiments
+						print term,s.sentiments
+						count_inDoc += 1
+
+					senti += senti_inDoc/float(count_inDoc)
+					# print "s.sentiments:",s.sentiments
+					count += 1
+				print "semti / float(count):", semti / float(count)
+				sentiments_FromSet.append(semti / float(count))
+
+		print sentiments_FromSet
+
+
+		# 
+
 		# ======= Predict And result.csv =======
-		with open( "result.csv", "w") as outputfile:
-			outputfile.write("NewsId,Agency")
-			outputfile.write("\n")
-			for fname in os.listdir(queryDir):
-				if fname == ".DS_Store":
-					continue
-				with open(os.path.join(queryDir, fname)) as f:
-					data = f.read().splitlines()
-					nameOfdata = data[0]
-					print nameOfdata
-					content = ""
-					for x in xrange(2,len(data)):
-						# print data[x]
-						content += data[x]
-					# print content
-					result = corporaMgr.getClassifiyPublisherName(content, grocery.predict(simplify(content)))
-					outputfile.write(nameOfdata)
-					outputfile.write(",")
-					outputfile.write(result)
-					outputfile.write("\n")
+		# with open( "result.csv", "w") as outputfile:
+		# 	outputfile.write("NewsId,Agency")
+		# 	outputfile.write("\n")
+		# 	for fname in os.listdir(queryDir):
+		# 		if fname == ".DS_Store":
+		# 			continue
+		# 		with open(os.path.join(queryDir, fname)) as f:
+		# 			data = f.read().splitlines()
+		# 			nameOfdata = data[0]
+		# 			print nameOfdata
+		# 			content = ""
+		# 			for x in xrange(2,len(data)):
+		# 				# print data[x]
+		# 				content += data[x]
+		# 			# print content
+		# 			result = corporaMgr.getClassifiyPublisherName(content, grocery.predict(simplify(content)))
+		# 			outputfile.write(nameOfdata)
+		# 			outputfile.write(",")
+		# 			outputfile.write(result)
+		# 			outputfile.write("\n")
 
 	else:
 		print "Please use like 'python sim.py [originDocs_Dir] [outputDocs_Dir] [WithCatagoryAndPublisher] [train.csv]'"
